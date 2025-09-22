@@ -1,16 +1,27 @@
 import express from "express";
-import axios from "axios";
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
 async function sendMessage(content, name, img) {
     try {
-        await axios.post(process.env.WebhookURL, {
-            content: content,
+        const Message = {
+            content: "**Output Log**",
             username: name || "Bot",
-            avatar_url: img || undefined
-        });
+            avatar_url: img || undefined,
+            embeds: [{
+                title: "**                         INFORMATION**",
+                description: content,
+                color: 0x18100,
+                footer: { text: name },
+                timestamp: new Date().toISOString(),
+            }]
+        };
+        fetch(process.env.WebhookURL, 
+			{method: "POST",
+			headers: {"Content-Type": "application/json"}, 
+			body: JSON.stringify(Message)
+		});
         console.log("Message sent!");
         return true;
     } catch (error) {
@@ -23,13 +34,13 @@ app.use(express.json());
 
 app.post("/send", async (req, res) => {
     const { message, name, img } = req.body;
-
+    
     if (!message) {
         return res.status(400).json({ error: "No message provided" });
     }
-
+    
     const success = await sendMessage(message, name, img);
-
+    
     if (success) {
         res.json({ status: "ok", sent: true });
     } else {
